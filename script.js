@@ -59,6 +59,21 @@ document.addEventListener('DOMContentLoaded', function () {
         observer.observe(el);
     });
 
+    // --- Pre-fill Contact Form from Product Page Links ---
+    const params = new URLSearchParams(window.location.search);
+    const product = params.get('product');
+    const plan = params.get('plan');
+
+    if (product) {
+        var messageField = document.getElementById('message');
+        if (messageField) {
+            var inquiry = plan
+                ? 'I\'m interested in the ' + plan + ' plan for ' + product + '. I\'d like to learn more about pricing, features, and implementation. Please reach out at your earliest convenience.'
+                : 'I\'m interested in learning more about ' + product + '. Please reach out to discuss how it can benefit our organization.';
+            messageField.value = inquiry;
+        }
+    }
+
     // --- Simple Form Validation ---
     const form = document.getElementById('contact-form');
     const submitBtn = document.getElementById('submit-btn');
