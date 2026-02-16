@@ -5,6 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="icon" type="image/png" href="logo.png">
+    <script>
+(function() {
+  var EP = 'https://gaconnect-dev-ed.develop.my.salesforce-sites.com/services/apexrest/ga4/track';
+  var CK = '_ga4c';
+  var EX = 30;
+
+  function getParam(n) {
+    var m = location.search.match(new RegExp('[?&]' + n + '=([^&]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function setCookie(n, v, d) {
+    var dt = new Date(); dt.setTime(dt.getTime() + d * 86400000);
+    document.cookie = n + '=' + encodeURIComponent(v) +
+      ';expires=' + dt.toUTCString() + ';path=/;SameSite=Lax';
+  }
+  function getCookie(n) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + n + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function getClientId() {
+    var ga = getCookie('_ga');
+    return ga ? ga.replace(/^GA\d+\.\d+\./, '') : '';
+  }
+  function getDevice() {
+    var u = navigator.userAgent;
+    if (/Mobi|Android/i.test(u)) return /Tablet|iPad/i.test(u) ? 'tablet' : 'mobile';
+    return 'desktop';
+  }
+
+  var d = JSON.parse(getCookie(CK) || '{}');
+  var s = getParam('utm_source');
+  if (s) {
+    d.source = s;
+    d.medium = getParam('utm_medium');
+    d.campaign = getParam('utm_campaign');
+    d.term = getParam('utm_term');
+    d.content = getParam('utm_content');
+  }
+  if (!d.landingPage) {
+    d.landingPage = location.href;
+    d.referrer = document.referrer;
+    d.firstVisit = new Date().toISOString();
+  }
+  if (!d.source && document.referrer) {
+    try {
+      var ref = new URL(document.referrer);
+      if (ref.hostname !== location.hostname) {
+        d.source = ref.hostname;
+        d.medium = 'referral';
+      }
+    } catch(e) {}
+  }
+  d.pages = d.pages || [];
+  if (d.pages.indexOf(location.pathname) === -1) d.pages.push(location.pathname);
+  setCookie(CK, JSON.stringify(d), EX);
+
+  function findEmail(f) {
+    var el = f.querySelectorAll('input[type="email"],input[name*="email"],input[name*="Email"]');
+    for (var i = 0; i < el.length; i++) {
+      if (el[i].value && el[i].value.indexOf('@') > 0) return el[i].value;
+    }
+    var all = f.querySelectorAll('input[type="text"],input:not([type])');
+    for (var j = 0; j < all.length; j++) {
+      if (/^[^@]+@[^@]+\.[^@]+$/.test(all[j].value)) return all[j].value;
+    }
+    return '';
+  }
+
+  function send(email) {
+    var d = JSON.parse(getCookie(CK) || '{}');
+    var p = {
+      email: email, clientId: getClientId(),
+      source: d.source || '', medium: d.medium || '',
+      campaign: d.campaign || '', term: d.term || '',
+      content: d.content || '', landingPage: d.landingPage || '',
+      referrer: d.referrer || '', deviceType: getDevice(),
+      pagesVisited: d.pages || []
+    };
+    if (!p.email && !p.clientId) return;
+    var x = new XMLHttpRequest();
+    x.open('POST', EP, true);
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.send(JSON.stringify(p));
+  }
+
+  document.addEventListener('submit', function(e) {
+    if (e.target && e.target.tagName === 'FORM') send(findEmail(e.target));
+  }, true);
+})();
+</script>
     <title>Attom Data Connect | Property Data Enrichment for Salesforce | SaaS Wise Solutions</title>
     <meta name="description" content="Attom Data Connect pulls comprehensive property details, AVM valuations, equity estimates, and ownership data from Attom API directly into any Salesforce org. Works with Contacts, Leads, Opportunities, and custom objects.">
     <meta name="keywords" content="Attom Data Salesforce integration, property data Salesforce, AVM Salesforce, CRM data enrichment, Attom API Salesforce connector, property valuation Salesforce, Salesforce managed package">
